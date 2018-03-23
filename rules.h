@@ -16,35 +16,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
-#include "uthash.h"
 
-// Input is truncated to BLOCK_SIZE - 1 bytes
+// Input over BLOCK_SIZE - 1 bytes are skipped
 // Rules which push the output over BLOCK_SIZE - 1 are skipped
 #ifndef BLOCK_SIZE
-    #define BLOCK_SIZE 64
+    #define BLOCK_SIZE 32
 #endif
 
-
-typedef struct Rule {
-    char  *text;
-    size_t length;
-} Rule;
-
-
-// Makes a copy of a rule and returns a pointer to the new copy
-Rule *clone_rule(Rule *source);
-
-// Frees the members of a rule structure
-void free_rule(Rule *rule);
-
-// Parses a rule into a Rule struct
-// The rule is checked for validity and all no-ops are removed
-int parse_rule(char *rule_text, int rule_text_length, Rule **output_rule);
 
 // Applies a rule to an input word and saves the output to output_word
 // If a rule operation would cause the length to extend beyond BLOCK_SIZE, the operation is skipped
 // Do not pass a hand-crafted rule struct into this function, run it through parse_rule() first
-int apply_rule(Rule *rule_to_apply, char *input_word, int input_len, char output_word[BLOCK_SIZE]);
+int apply_rule(char *rule, int rule_len, char in[BLOCK_SIZE], int in_len, char out[BLOCK_SIZE]);
 
 
 
