@@ -87,21 +87,6 @@ enum RULE_RC {
 #define RULE_OP_MANGLE_DUPECHAR_FIRST   'z'
 #define RULE_OP_MANGLE_DUPECHAR_LAST    'Z'
 #define RULE_OP_MANGLE_DUPECHAR_ALL     'q'
-#define RULE_OP_MANGLE_EXTRACT_MEMORY   'X'
-#define RULE_OP_MANGLE_APPEND_MEMORY    '4'
-#define RULE_OP_MANGLE_PREPEND_MEMORY   '6'
-
-#define RULE_OP_MEMORIZE_WORD           'M'
-
-#define RULE_OP_REJECT_LESS             '<'
-#define RULE_OP_REJECT_GREATER          '>'
-#define RULE_OP_REJECT_CONTAIN          '!'
-#define RULE_OP_REJECT_NOT_CONTAIN      '/'
-#define RULE_OP_REJECT_EQUAL_FIRST      '('
-#define RULE_OP_REJECT_EQUAL_LAST       ')'
-#define RULE_OP_REJECT_EQUAL_AT         '='
-#define RULE_OP_REJECT_CONTAINS         '%'
-#define RULE_OP_REJECT_MEMORY           'Q'
 
 #define RULE_OP_MANGLE_SWITCH_FIRST     'k'
 #define RULE_OP_MANGLE_SWITCH_LAST      'K'
@@ -115,5 +100,6 @@ enum RULE_RC {
 #define RULE_OP_MANGLE_DUPEBLOCK_FIRST  'y'
 #define RULE_OP_MANGLE_DUPEBLOCK_LAST   'Y'
 #define RULE_OP_MANGLE_TITLE            'E'
+#define RULE_OP_MANGLE_TITLE_SEP        'e'
 
 #endif /* RULES_H */

@@ -4,6 +4,15 @@
 // License: MIT
 // =============================================================================
 
+/*
+Important Test Case:
+1. e/e
+2. r
+3. {/}
+
+*/
+
+
 #include "rules.h"
 
 // Increment rule position, return syntax error on premature end
@@ -34,7 +43,6 @@ static inline bool class_alpha(char c) { return(class_lower(c) || class_upper(c)
 // Single character to integer value
 // 0 .. 9 =>  0 ..  9
 // A .. Z => 10 .. 35
-// a .. z => 36 .. 61
 // else -1 (error)
 static inline int conv_ctoi(char c)
 {
@@ -43,9 +51,6 @@ static inline int conv_ctoi(char c)
 
     } else if (class_upper(c)) {
         return ((int)(c - 'A' + (char)10));
-
-    } else if (class_lower(c)) {
-        return ((int)(c - 'a' + (char)36));
 
     } else {
         return(-1);
@@ -89,453 +94,432 @@ void mangle_switch(char str[BLOCK_SIZE], int left, int right) {
 }
 
 
-// Convert to lower
-int mangle_lower_all(char str[BLOCK_SIZE], int str_len)
+int mangle_lrest (char arr[BLOCK_SIZE], int arr_len)
 {
-    for (int pos = 0; pos < str_len; pos++) { mangle_lower_at(str, pos); }
+  int pos;
 
-    return(str_len);
+  for (pos = 0; pos < arr_len; pos++) MANGLE_LOWER_AT (arr, pos);
+
+  return (arr_len);
 }
 
-
-// Convert to upper
-int mangle_upper_all(char str[BLOCK_SIZE], int str_len)
+int mangle_urest (char arr[BLOCK_SIZE], int arr_len)
 {
-    for (int pos = 0; pos < str_len; pos++) { mangle_upper_at(str, pos); }
+  int pos;
 
-    return(str_len);
+  for (pos = 0; pos < arr_len; pos++) MANGLE_UPPER_AT (arr, pos);
+
+  return (arr_len);
 }
 
-
-// Toggle case
-int mangle_toggle_all(char str[BLOCK_SIZE], int str_len)
+int mangle_trest (char arr[BLOCK_SIZE], int arr_len)
 {
-    for (int pos = 0; pos < str_len; pos++) { mangle_toggle_at(str, pos); }
+  int pos;
 
-    return(str_len);
+  for (pos = 0; pos < arr_len; pos++) MANGLE_TOGGLE_AT (arr, pos);
+
+  return (arr_len);
 }
 
-
-// Reverse a string
-int mangle_reverse(char str[BLOCK_SIZE], int str_len)
+int mangle_reverse (char arr[BLOCK_SIZE], int arr_len)
 {
-    char temp[BLOCK_SIZE];
-    memcpy(temp, str, str_len);
+  int l;
 
-    for (int i = 0; i < str_len; i++) {
-        str[i] = temp[str_len - i - 1];
+  for (l = 0; l < arr_len; l++)
+  {
+    int r = arr_len - 1 - l;
+
+    if (l >= r) break;
+
+    MANGLE_SWITCH (arr, l, r);
+  }
+
+  return (arr_len);
+}
+
+int mangle_double (char arr[BLOCK_SIZE], int arr_len)
+{
+  if ((arr_len * 2) >= BLOCK_SIZE) return (arr_len);
+
+  memcpy (&arr[arr_len], arr, (size_t) arr_len);
+
+  return (arr_len * 2);
+}
+
+int mangle_double_times (char arr[BLOCK_SIZE], int arr_len, int times)
+{
+  if (((arr_len * times) + arr_len) >= BLOCK_SIZE) return (arr_len);
+
+  int orig_len = arr_len;
+
+  int i;
+
+  for (i = 0; i < times; i++)
+  {
+    memcpy (&arr[arr_len], arr, orig_len);
+
+    arr_len += orig_len;
+  }
+
+  return (arr_len);
+}
+
+int mangle_reflect (char arr[BLOCK_SIZE], int arr_len)
+{
+  if ((arr_len * 2) >= BLOCK_SIZE) return (arr_len);
+
+  mangle_double (arr, arr_len);
+
+  mangle_reverse (arr + arr_len, arr_len);
+
+  return (arr_len * 2);
+}
+
+int mangle_rotate_left (char arr[BLOCK_SIZE], int arr_len)
+{
+  int l;
+  int r;
+
+  for (l = 0, r = arr_len - 1; r > 0; r--)
+  {
+    MANGLE_SWITCH (arr, l, r);
+  }
+
+  return (arr_len);
+}
+
+int mangle_rotate_right (char arr[BLOCK_SIZE], int arr_len)
+{
+  int l;
+  int r;
+
+  for (l = 0, r = arr_len - 1; l < r; l++)
+  {
+    MANGLE_SWITCH (arr, l, r);
+  }
+
+  return (arr_len);
+}
+
+int mangle_append (char arr[BLOCK_SIZE], int arr_len, char c)
+{
+  if ((arr_len + 1) >= BLOCK_SIZE) return (arr_len);
+
+  arr[arr_len] = c;
+
+  return (arr_len + 1);
+}
+
+int mangle_prepend (char arr[BLOCK_SIZE], int arr_len, char c)
+{
+  if ((arr_len + 1) >= BLOCK_SIZE) return (arr_len);
+
+  int arr_pos;
+
+  for (arr_pos = arr_len - 1; arr_pos > -1; arr_pos--)
+  {
+    arr[arr_pos + 1] = arr[arr_pos];
+  }
+
+  arr[0] = c;
+
+  return (arr_len + 1);
+}
+
+int mangle_delete_at (char arr[BLOCK_SIZE], int arr_len, int upos)
+{
+  if (upos >= arr_len) return (arr_len);
+
+  int arr_pos;
+
+  for (arr_pos = upos; arr_pos < arr_len - 1; arr_pos++)
+  {
+    arr[arr_pos] = arr[arr_pos + 1];
+  }
+
+  return (arr_len - 1);
+}
+
+int mangle_extract (char arr[BLOCK_SIZE], int arr_len, int upos, int ulen)
+{
+  if (upos >= arr_len) return (arr_len);
+
+  if ((upos + ulen) > arr_len) return (arr_len);
+
+  int arr_pos;
+
+  for (arr_pos = 0; arr_pos < ulen; arr_pos++)
+  {
+    arr[arr_pos] = arr[upos + arr_pos];
+  }
+
+  return (ulen);
+}
+
+int mangle_omit (char arr[BLOCK_SIZE], int arr_len, int upos, int ulen)
+{
+  if (upos >= arr_len) return (arr_len);
+
+  if ((upos + ulen) > arr_len) return (arr_len);
+
+  int arr_pos;
+
+  for (arr_pos = upos; arr_pos < arr_len - ulen; arr_pos++)
+  {
+    arr[arr_pos] = arr[arr_pos + ulen];
+  }
+
+  return (arr_len - ulen);
+}
+
+int mangle_insert (char arr[BLOCK_SIZE], int arr_len, int upos, char c)
+{
+  if (upos > arr_len) return (arr_len);
+
+  if ((arr_len + 1) >= BLOCK_SIZE) return (arr_len);
+
+  int arr_pos;
+
+  for (arr_pos = arr_len - 1; arr_pos > upos - 1; arr_pos--)
+  {
+    arr[arr_pos + 1] = arr[arr_pos];
+  }
+
+  arr[upos] = c;
+
+  return (arr_len + 1);
+}
+
+int mangle_insert_multi (char arr[BLOCK_SIZE], int arr_len, int arr_pos, char arr2[BLOCK_SIZE], int arr2_len, int arr2_pos, int arr2_cpy)
+{
+  if ((arr_len + arr2_cpy) > BLOCK_SIZE) return (RULE_RC_REJECT_ERROR);
+
+  if (arr_pos > arr_len) return (RULE_RC_REJECT_ERROR);
+
+  if (arr2_pos > arr2_len) return (RULE_RC_REJECT_ERROR);
+
+  if ((arr2_pos + arr2_cpy) > arr2_len) return (RULE_RC_REJECT_ERROR);
+
+  if (arr2_cpy < 1) return (RULE_RC_SYNTAX_ERROR);
+
+  memcpy (arr2, arr2 + arr2_pos, arr2_len - arr2_pos);
+
+  memcpy (arr2 + arr2_cpy, arr + arr_pos, arr_len - arr_pos);
+
+  memcpy (arr + arr_pos, arr2, arr_len - arr_pos + arr2_cpy);
+
+  return (arr_len + arr2_cpy);
+}
+
+int mangle_overstrike (char arr[BLOCK_SIZE], int arr_len, int upos, char c)
+{
+  if (upos >= arr_len) return (arr_len);
+
+  arr[upos] = c;
+
+  return (arr_len);
+}
+
+int mangle_truncate_at (char arr[BLOCK_SIZE], int arr_len, int upos)
+{
+  if (upos >= arr_len) return (arr_len);
+
+  memset (arr + upos, 0, arr_len - upos);
+
+  return (upos);
+}
+
+int mangle_replace (char arr[BLOCK_SIZE], int arr_len, char oldc, char newc)
+{
+  int arr_pos;
+
+  for (arr_pos = 0; arr_pos < arr_len; arr_pos++)
+  {
+    if (arr[arr_pos] != oldc) continue;
+
+    arr[arr_pos] = newc;
+  }
+
+  return (arr_len);
+}
+
+int mangle_purgechar (char arr[BLOCK_SIZE], int arr_len, char c)
+{
+  int arr_pos;
+
+  int ret_len;
+
+  for (ret_len = 0, arr_pos = 0; arr_pos < arr_len; arr_pos++)
+  {
+    if (arr[arr_pos] == c) continue;
+
+    arr[ret_len] = arr[arr_pos];
+
+    ret_len++;
+  }
+
+  return (ret_len);
+}
+
+int mangle_dupeblock_prepend (char arr[BLOCK_SIZE], int arr_len, int ulen)
+{
+  if (ulen > arr_len) return (arr_len);
+
+  if ((arr_len + ulen) >= BLOCK_SIZE) return (arr_len);
+
+  char cs[100] = { 0 };
+
+  memcpy (cs, arr, ulen);
+
+  int i;
+
+  for (i = 0; i < ulen; i++)
+  {
+    char c = cs[i];
+
+    arr_len = mangle_insert (arr, arr_len, i, c);
+  }
+
+  return (arr_len);
+}
+
+int mangle_dupeblock_append (char arr[BLOCK_SIZE], int arr_len, int ulen)
+{
+  if (ulen > arr_len) return (arr_len);
+
+  if ((arr_len + ulen) >= BLOCK_SIZE) return (arr_len);
+
+  int upos = arr_len - ulen;
+
+  int i;
+
+  for (i = 0; i < ulen; i++)
+  {
+    char c = arr[upos + i];
+
+    arr_len = mangle_append (arr, arr_len, c);
+  }
+
+  return (arr_len);
+}
+
+int mangle_dupechar_at (char arr[BLOCK_SIZE], int arr_len, int upos, int ulen)
+{
+  if ( arr_len         ==  0) return (arr_len);
+  if ((arr_len + ulen) >= BLOCK_SIZE) return (arr_len);
+
+  char c = arr[upos];
+
+  int i;
+
+  for (i = 0; i < ulen; i++)
+  {
+    arr_len = mangle_insert (arr, arr_len, upos, c);
+  }
+
+  return (arr_len);
+}
+
+int mangle_dupechar (char arr[BLOCK_SIZE], int arr_len)
+{
+  if ( arr_len            ==  0) return (arr_len);
+  if ((arr_len + arr_len) >= BLOCK_SIZE) return (arr_len);
+
+  int arr_pos;
+
+  for (arr_pos = arr_len - 1; arr_pos > -1; arr_pos--)
+  {
+    int new_pos = arr_pos * 2;
+
+    arr[new_pos] = arr[arr_pos];
+
+    arr[new_pos + 1] = arr[arr_pos];
+  }
+
+  return (arr_len * 2);
+}
+
+int mangle_switch_at_check (char arr[BLOCK_SIZE], int arr_len, int upos, int upos2)
+{
+  if (upos  >= arr_len) return (arr_len);
+  if (upos2 >= arr_len) return (arr_len);
+
+  MANGLE_SWITCH (arr, upos, upos2);
+
+  return (arr_len);
+}
+
+int mangle_switch_at (char arr[BLOCK_SIZE], int arr_len, int upos, int upos2)
+{
+  MANGLE_SWITCH (arr, upos, upos2);
+
+  return (arr_len);
+}
+
+int mangle_chr_shiftl (char arr[BLOCK_SIZE], int arr_len, int upos)
+{
+  if (upos >= arr_len) return (arr_len);
+
+  arr[upos] <<= 1;
+
+  return (arr_len);
+}
+
+int mangle_chr_shiftr (char arr[BLOCK_SIZE], int arr_len, int upos)
+{
+  if (upos >= arr_len) return (arr_len);
+
+  arr[upos] >>= 1;
+
+  return (arr_len);
+}
+
+int mangle_chr_incr (char arr[BLOCK_SIZE], int arr_len, int upos)
+{
+  if (upos >= arr_len) return (arr_len);
+
+  arr[upos] += 1;
+
+  return (arr_len);
+}
+
+int mangle_chr_decr (char arr[BLOCK_SIZE], int arr_len, int upos)
+{
+  if (upos >= arr_len) return (arr_len);
+
+  arr[upos] -= 1;
+
+  return (arr_len);
+}
+
+int mangle_title_sep (char arr[BLOCK_SIZE], int arr_len, char c)
+{
+  int upper_next = 1;
+
+  int pos;
+
+  for (pos = 0; pos < arr_len; pos++)
+  {
+    if (arr[pos] == c)
+    {
+      upper_next = 1;
+
+      continue;
     }
 
-    return(str_len);
-}
+    if (upper_next)
+    {
+      upper_next = 0;
 
-
-// Append a string to itself
-int mangle_double(char str[BLOCK_SIZE], int str_len)
-{
-    if ((str_len * 2) >= BLOCK_SIZE) { return(str_len); }
-
-    memcpy(&str[str_len], str, (size_t)str_len);
-    return(str_len * 2);
-}
-
-
-// Append a string to itself N times
-int mangle_double_times(char str[BLOCK_SIZE], int str_len, int times)
-{
-    if ((str_len * times) + str_len >= BLOCK_SIZE) { return(str_len); }
-
-    int orig_len = str_len;
-
-    for (int i = 0; i < times; i++) {
-        memcpy(&str[str_len], str, orig_len);
-
-        str_len += orig_len;
+      MANGLE_UPPER_AT (arr, pos);
     }
-
-    return(str_len);
-}
-
-
-// Append a string to itself backwards
-int mangle_reflect(char str[BLOCK_SIZE], int str_len)
-{
-    if ((str_len * 2) >= BLOCK_SIZE) { return(str_len); }
-
-    mangle_double(str, str_len);
-    mangle_reverse(&str[str_len], str_len);
-
-    return(str_len * 2);
-}
-
-
-// Rotates a string left one character
-int mangle_rotate_left(char str[BLOCK_SIZE], int str_len)
-{
-    if (str_len < 2) { return(str_len); }
-
-    // Save the first character
-    char temp = str[0];
-
-    // Shift everything left
-    for (int str_pos = 0; str_pos < str_len - 1; str_pos++) {
-        str[str_pos] = str[str_pos + 1];
+    else
+    {
+      MANGLE_LOWER_AT (arr, pos);
     }
+  }
 
-    // Put the first character at the end
-    str[str_len - 1] = temp;
-
-    return(str_len);
-}
-
-
-// Rotates a string right one character
-int mangle_rotate_right(char str[BLOCK_SIZE], int str_len)
-{
-    if (str_len < 2) { return(str_len); }
-
-    // Save the last character
-    char temp = str[str_len - 1];
-
-    // Shift everything right
-    for (int str_pos = str_len - 1; str_pos > 0; str_pos--) {
-        str[str_pos] = str[str_pos - 1];
-    }
-
-    // Place the last character at the front
-    str[0] = temp;
-
-    return(str_len);
-}
-
-
-// Appends a single character to a string
-int mangle_append(char str[BLOCK_SIZE], int str_len, char c)
-{
-    if ((str_len + 1) >= BLOCK_SIZE) { return(str_len); }
-
-    str[str_len] = c;
-
-    return(str_len + 1);
-}
-
-
-// Prepends a single character to a string
-int mangle_prepend(char str[BLOCK_SIZE], int str_len, char c)
-{
-    if ((str_len + 1) >= BLOCK_SIZE) { return(str_len); }
-
-    str[str_len] = c;
-    mangle_rotate_right(str, str_len + 1);
-
-    return(str_len + 1);
-}
-
-
-// Deletes a single character at offset
-int mangle_delete_at(char str[BLOCK_SIZE], int str_len, int offset)
-{
-    if (offset >= str_len || offset < 0) { return(str_len); }
-
-    for (int str_pos = offset; str_pos < str_len - 1; str_pos++) {
-        str[str_pos] = str[str_pos + 1];
-    }
-
-    return(str_len - 1);
-}
-
-
-// Replaces string with substr_len characters starting at offset
-int mangle_extract(char str[BLOCK_SIZE], int str_len, int offset, int substr_len)
-{
-    if (offset >= str_len) { return(str_len); }
-
-    // substr_len is too large, shorten it so it fits within this string
-    if ((offset + substr_len) > str_len) { substr_len = str_len - offset; }
-
-    for (int str_pos = 0; str_pos < substr_len; str_pos++) {
-        str[str_pos] = str[offset + str_pos];
-    }
-
-    return(substr_len);
-}
-
-
-// Removes substr_len characters starting at offset
-int mangle_omit(char str[BLOCK_SIZE], int str_len, int offset, int substr_len)
-{
-    if (offset >= str_len) { return(str_len); }
-
-    // We know offset is within the string, shorten substr_len
-    //   so that offset + substr_len stays within the string
-    // This effectively skips the for loop and turns this into a truncate
-    if ((offset + substr_len) > str_len) { substr_len = str_len - offset; }
-
-    for (int str_pos = offset; str_pos < str_len - substr_len; str_pos++) {
-        str[str_pos] = str[str_pos + substr_len];
-    }
-
-    return(str_len - substr_len);
-}
-
-
-// Inserts a single character at offset, shifting the result down
-int mangle_insert(char str[BLOCK_SIZE], int str_len, int offset, char c)
-{
-    // If offset is beyond end of string, treat as an append
-    // offset == str_len allowed, same as appending character
-    if (offset > str_len) { offset = str_len; }
-    if ((str_len + 1) >= BLOCK_SIZE) { return(str_len); }
-
-    for (int str_pos = str_len - 1; str_pos > offset - 1; str_pos--) {
-        str[str_pos + 1] = str[str_pos];
-    }
-
-    str[offset] = c;
-
-    return(str_len + 1);
-}
-
-
-// Insert substr_len characters from mem starting at position mem_offset into position offset
-// str[0 .. offset - 1] + mem[mem_offset .. mem_offset + substr_len] + str[offset .. str_len]
-int mangle_insert_multi(
-    char str[BLOCK_SIZE], int str_len, int str_offset,
-    char mem[BLOCK_SIZE], int mem_len, int mem_offset,
-    int substr_len
-)
-{
-    if (str_offset > str_len) { str_offset = str_len; }
-    if ((str_len + substr_len) >= BLOCK_SIZE) { return(str_len); }
-
-    if (mem_offset >= mem_len) { return(str_len); }
-    if ((mem_offset + substr_len) > mem_len) { substr_len = mem_len - mem_offset; }
-    if (substr_len < 1) { return(str_len); }
-
-    // Shift mem down mem_offset characters
-    // This is the substring we will add to str
-    //   mem[mem_offset .. mem_offset + substr_len]
-    memcpy(mem, mem + mem_offset, mem_len - mem_offset);
-
-    // Append the back half of str (after str_offset) to mem
-    // This will become the back half of the result
-    //   mem[mem_offset .. mem_offset + substr_len] + str[str_offset .. str_len]
-    memcpy(mem + substr_len, str + str_offset, str_len - str_offset);
-
-    // Insert our result to the correct place in str
-    memcpy(str + str_offset, mem, str_len - str_offset + substr_len);
-
-    return(str_len + substr_len);
-}
-
-
-// Replace a single character at offset
-int mangle_overstrike(char str[BLOCK_SIZE], int str_len, int offset, char c)
-{
-    if (offset >= str_len || offset < 0) { return(str_len); }
-
-    str[offset] = c;
-
-    return(str_len);
-}
-
-
-// Remove everything after position offset
-int mangle_truncate_at(char str[BLOCK_SIZE], int str_len, int offset)
-{
-    if (offset >= str_len || offset < 0) { return(str_len); }
-
-    // Not explicitly required, just messing with str to suppress a gcc warning
-    str[offset] = 0;
-
-    return(offset);
-}
-
-
-// Replace all instances of oldc with newc
-int mangle_replace(char str[BLOCK_SIZE], int str_len, char oldc, char newc)
-{
-    for (int str_pos = 0; str_pos < str_len; str_pos++) {
-        if (str[str_pos] != oldc) { continue; }
-
-        str[str_pos] = newc;
-    }
-
-    return(str_len);
-}
-
-
-// Remove all instances of c
-int mangle_purgechar(char str[BLOCK_SIZE], int str_len, char c)
-{
-    int ret_len, str_pos;
-    for (ret_len = 0, str_pos = 0; str_pos < str_len; str_pos++) {
-        if (str[str_pos] == c) { continue; }
-
-        str[ret_len] = str[str_pos];
-
-        ret_len++;
-    }
-
-    return(ret_len);
-}
-
-
-// Duplicate the first substr_len characters, prepending them to the string
-//   str = "Apple", substr_len = 3, result = "AppApple"
-int mangle_dupeblock_prepend(char str[BLOCK_SIZE], int str_len, int substr_len)
-{
-    if (substr_len < 1) { return(str_len); }
-
-    // If substr_len is too long, shorten it to the string's length
-    // This effectively makes it a "dupe word" operation
-    if (substr_len > str_len) { substr_len = str_len; }
-    if ((str_len + substr_len) >= BLOCK_SIZE) { return(str_len); }
-
-    for (int str_pos = str_len - 1; str_pos >= 0; str_pos--) {
-        str[str_pos + substr_len] = str[str_pos];
-    }
-
-    return(str_len + substr_len);
-}
-
-
-// Duplicate the first substr_len characters, appending them to the string
-//   str = "Apple", substr_len = 3, result = "AppleApp"
-int mangle_dupeblock_append(char str[BLOCK_SIZE], int str_len, int substr_len)
-{
-    if (substr_len < 1) { return(str_len); }
-
-    // If substr_len is too long, shorten it to the string's length
-    // This effectively makes it a "dupe word" operation
-    if (substr_len > str_len) { substr_len = str_len; }
-    if ((str_len + substr_len) >= BLOCK_SIZE) { return(str_len); }
-
-    memcpy(&str[str_len], str, substr_len);
-
-    return(str_len + substr_len);
-}
-
-
-// Duplicate the character at offset substr_len times
-int mangle_dupechar_at(char str[BLOCK_SIZE], int str_len, int offset, int substr_len)
-{
-    if (str_len == 0) { return(str_len); }
-    if ((str_len + substr_len) >= BLOCK_SIZE) { return(str_len); }
-
-    char c = str[offset];
-    for (int i = 0; i < substr_len; i++) {
-        str_len = mangle_insert(str, str_len, offset, c);
-    }
-
-    return(str_len);
-}
-
-
-// Duplicates every character
-int mangle_dupechar(char str[BLOCK_SIZE], int str_len)
-{
-    if (str_len == 0) { return(str_len); }
-    if ((str_len + str_len) >= BLOCK_SIZE) { return(str_len); }
-
-    for (int str_pos = str_len - 1; str_pos > -1; str_pos--) {
-        int new_pos = str_pos * 2;
-
-        str[new_pos] = str[str_pos];
-
-        str[new_pos + 1] = str[str_pos];
-    }
-
-    return(str_len * 2);
-}
-
-
-// Swap the characters at positions offset and offset2
-int mangle_switch_at_check(char str[BLOCK_SIZE], int str_len, int offset, int offset2)
-{
-    if (offset  >= str_len) { return(str_len); }
-    if (offset2 >= str_len) { return(str_len); }
-
-    mangle_switch(str, offset, offset2);
-
-    return(str_len);
-}
-
-
-// Swap the characters at positions offset and offset2, no safety checks
-int mangle_switch_at(char str[BLOCK_SIZE], int str_len, int offset, int offset2)
-{
-    mangle_switch(str, offset, offset2);
-
-    return(str_len);
-}
-
-
-// Left bit-shift the character at offset
-int mangle_chr_shiftl(uint8_t str[BLOCK_SIZE], int str_len, int offset)
-{
-    if (offset >= str_len) { return(str_len); }
-
-    str[offset] <<= 1;
-
-    return(str_len);
-}
-
-
-// Right bit-shift the character at offset
-int mangle_chr_shiftr(uint8_t str[BLOCK_SIZE], int str_len, int offset)
-{
-    if (offset >= str_len) { return(str_len); }
-
-    str[offset] >>= 1;
-
-    return(str_len);
-}
-
-
-// Increment the character at offset
-int mangle_chr_incr(uint8_t str[BLOCK_SIZE], int str_len, int offset)
-{
-    if (offset >= str_len) { return(str_len); }
-
-    str[offset] += 1;
-
-    return(str_len);
-}
-
-
-// Decrement the character at offset
-int mangle_chr_decr(uint8_t str[BLOCK_SIZE], int str_len, int offset)
-{
-    if (offset >= str_len) { return(str_len); }
-
-    str[offset] -= 1;
-
-    return(str_len);
-}
-
-
-// Convert a string to title case
-int mangle_title(char str[BLOCK_SIZE], int str_len)
-{
-    int upper_next = 1;
-
-    for (int pos = 0; pos < str_len; pos++) {
-        if (str[pos] == ' ') {
-            upper_next = 1;
-            continue;
-        }
-
-        if (upper_next) {
-            upper_next = 0;
-            mangle_upper_at(str, pos);
-
-        } else {
-            mangle_lower_at(str, pos);
-        }
-    }
-
-    return(str_len);
+  return (arr_len);
 }
 
 
@@ -643,21 +627,16 @@ int parse_rule(char *rule, int rule_len, Rule **output_rule) {
             case RULE_OP_MANGLE_CHR_DECR:
             case RULE_OP_MANGLE_REPLACE_NP1:
             case RULE_OP_MANGLE_REPLACE_NM1:
-            case RULE_OP_REJECT_LESS:
-            case RULE_OP_REJECT_GREATER:
                 NEXT_RULEPOS(rule_pos);
                 NEXT_RPTOI(rule, rule_pos, temp_int);
                 new_rule[new_rule_len++] = rule[rule_pos];
                 break;
 
             // Character
+            case RULE_OP_MANGLE_TITLE_SEP:
             case RULE_OP_MANGLE_APPEND:
             case RULE_OP_MANGLE_PREPEND:
             case RULE_OP_MANGLE_PURGECHAR:
-            case RULE_OP_REJECT_CONTAIN:
-            case RULE_OP_REJECT_NOT_CONTAIN:
-            case RULE_OP_REJECT_EQUAL_FIRST:
-            case RULE_OP_REJECT_EQUAL_LAST:
                 NEXT_RULEPOS(rule_pos);
                 new_rule[new_rule_len++] = rule[rule_pos];
                 break;
@@ -687,8 +666,6 @@ int parse_rule(char *rule, int rule_len, Rule **output_rule) {
             // Integer + Character
             case RULE_OP_MANGLE_INSERT:
             case RULE_OP_MANGLE_OVERSTRIKE:
-            case RULE_OP_REJECT_EQUAL_AT:
-            case RULE_OP_REJECT_CONTAINS:
                 NEXT_RULEPOS(rule_pos);
                 NEXT_RPTOI(rule, rule_pos, temp_int);
                 new_rule[new_rule_len++] = rule[rule_pos];
@@ -697,34 +674,6 @@ int parse_rule(char *rule, int rule_len, Rule **output_rule) {
                 new_rule[new_rule_len++] = rule[rule_pos];
                 break;
 
-            // Memory write
-            case RULE_OP_MEMORIZE_WORD:
-                mem_len = 1;
-                break;
-
-            // Memory read
-            case RULE_OP_MANGLE_APPEND_MEMORY:
-            case RULE_OP_MANGLE_PREPEND_MEMORY:
-            case RULE_OP_REJECT_MEMORY:
-                if (!mem_len) { errno = MEMORY_ERROR; }
-                break;
-
-            // Memory read + Integer + Integer + Integer
-            case RULE_OP_MANGLE_EXTRACT_MEMORY:
-                if (!mem_len) { errno = MEMORY_ERROR; break; }
-
-                NEXT_RULEPOS(rule_pos);
-                NEXT_RPTOI(rule, rule_pos, temp_int);
-                new_rule[new_rule_len++] = rule[rule_pos];
-
-                NEXT_RULEPOS(rule_pos);
-                NEXT_RPTOI(rule, rule_pos, temp_int);
-                new_rule[new_rule_len++] = rule[rule_pos];
-
-                NEXT_RULEPOS(rule_pos);
-                NEXT_RPTOI(rule, rule_pos, temp_int);
-                new_rule[new_rule_len++] = rule[rule_pos];
-                break;
 
             default:
                 errno = UNKNOWN_RULE_OP;
@@ -791,14 +740,9 @@ int apply_rule(Rule *input_rule, char *input_word, int input_len, char out[BLOCK
     int   rule_len = input_rule->length;
 
     if (input_word == NULL) { return(INVALID_INPUT); }
-    if (input_len  <     1) { return(INVALID_INPUT); }
+    if (input_len  <     0 ||   in_len >= BLOCK_SIZE) { return(INVALID_INPUT); }
 
-    int  mem_len = -1;
-    char mem[BLOCK_SIZE];
-
-    int out_len = (input_len < BLOCK_SIZE ? input_len : BLOCK_SIZE - 1);
-    memcpy(out, input_word, out_len);
-
+    //int out_len = (input_len < BLOCK_SIZE ? input_len : BLOCK_SIZE - 1);
 
     // Operation parameters
     int errno, rule_pos;
@@ -1022,106 +966,12 @@ int apply_rule(Rule *input_rule, char *input_word, int input_len, char out[BLOCK
                 }
                 break;
             }
+            case RULE_OP_MANGLE_TITLE_SEP:{
+                char chr = rule[++rule_pos];
+                out_len = mangle_title_sep(out, out_len, chr);
+            }
             case RULE_OP_MANGLE_TITLE: {
-                mangle_title(out, out_len);
-                break;
-            }
-            case RULE_OP_MANGLE_EXTRACT_MEMORY: {
-                if (mem_len < 0) { errno = MEMORY_ERROR; break; }
-
-                int mem_offset = conv_ctoi(rule[++rule_pos]);
-                int substr_len = conv_ctoi(rule[++rule_pos]);
-                int out_offset = conv_ctoi(rule[++rule_pos]);
-
-                // If this results in a negative value, the memory was such that this output becomes rejected
-                out_len = mangle_insert_multi(out, out_len, out_offset, mem, mem_len, mem_offset, substr_len);
-                break;
-            }
-            case RULE_OP_MANGLE_APPEND_MEMORY: {
-                if (mem_len < 0) { errno = MEMORY_ERROR; break; }
-                if ((out_len + mem_len) >= BLOCK_SIZE) { break; }
-
-                memcpy(out + out_len, mem, mem_len);
-                out_len += mem_len;
-                break;
-            }
-            case RULE_OP_MANGLE_PREPEND_MEMORY: {
-                if (mem_len < 0) { errno = MEMORY_ERROR; break; }
-                if ((out_len + mem_len) >= BLOCK_SIZE) { break; }
-
-                // Use the unused portion of mem as a buffer area
-                // We know it fits because (mem_len + out_len <= BLOCK_SIZE)
-                memcpy(mem + mem_len, out, out_len);
-                out_len += mem_len;
-                memcpy(out, mem, out_len);
-                break;
-            }
-            case RULE_OP_MEMORIZE_WORD: {
-                memcpy(mem, out, out_len);
-                mem_len = out_len;
-                break;
-            }
-            case RULE_OP_REJECT_LESS: {
-                int target_len = conv_ctoi(rule[++rule_pos]);
-
-                if ( !(out_len <= target_len) ) { errno = REJECTED; }
-                break;
-            }
-            case RULE_OP_REJECT_GREATER: {
-                int target_len = conv_ctoi(rule[++rule_pos]);
-
-                if ( !(out_len >= target_len) ) { errno = REJECTED; }
-                break;
-            }
-            case RULE_OP_REJECT_CONTAIN: {
-                char chr = rule[++rule_pos];
-
-                if (memchr(out, chr, out_len) != NULL) { errno = REJECTED; }
-                break;
-            }
-            case RULE_OP_REJECT_NOT_CONTAIN: {
-                char chr = rule[++rule_pos];
-
-                if (memchr(out, chr, out_len) == NULL) { errno = REJECTED; }
-                break;
-            }
-            case RULE_OP_REJECT_EQUAL_FIRST: {
-                char chr = rule[++rule_pos];
-
-                if (out_len < 1 || out[0] != chr) { errno = REJECTED; }
-                break;
-            }
-            case RULE_OP_REJECT_EQUAL_LAST: {
-                char chr = rule[++rule_pos];
-
-                if (out_len < 1 || out[out_len - 1] != chr) { errno = REJECTED; }
-                break;
-            }
-            case RULE_OP_REJECT_EQUAL_AT: {
-                int  offset = conv_ctoi(rule[++rule_pos]);
-                char chr    = rule[++rule_pos];
-
-                if (offset >= out_len || out[offset] != chr) { errno = REJECTED; }
-                break;
-            }
-            case RULE_OP_REJECT_CONTAINS: {
-                int  min_count = conv_ctoi(rule[++rule_pos]);
-                char chr       = rule[++rule_pos];
-
-                if (min_count > out_len) { errno = REJECTED; }
-
-                int count = 0;
-                for (int pos = 0; pos < out_len; pos++) {
-                    if (out[pos] == chr) { count++; }
-                    if (count >= min_count) { break; }
-                }
-
-                if (count < min_count) { errno = REJECTED; }
-                break;
-            }
-            case RULE_OP_REJECT_MEMORY: {
-                if (mem_len < 0) { errno = MEMORY_ERROR; break; }
-                if (out_len == mem_len && memcmp(out, mem, out_len) == 0) { errno = REJECTED; }
+                mangle_title_sep(out, out_len,' ');
                 break;
             }
             default:
