@@ -41,6 +41,7 @@ int check_digit = 0;
 int check_letter = 0;
 int check_lower = 0;
 int check_upper = 0;
+int filter_input = 1;
 
 static int check_password_policy(char *pw_buf, const int pw_len)
 {
@@ -73,20 +74,21 @@ static int check_password_policy(char *pw_buf, const int pw_len)
 
   for (int i = 0; i < pw_len; i ++)
   {
-    /* PRINTABLE ASCII CHECK 
-    //Not need this: Because input word and search word are both printable chars.
-    //Valid search result will only contain 1 \t
-    if ((pw_buf[i]) < 32 || (pw_buf[i]) > 126)
-    {
-      return 0;
+    /* PRINTABLE ASCII CHECK */
+    if (filter_input == 1){
+        if ((pw_buf[i]) < 32 || (pw_buf[i]) > 126)
+        {
+            return 0;
+        }
     }
-    */
-
-    if (flag_count == 0)
-    {
-      return 1;
+    else{
+        /* Cannot short-circuit if filtering non-ascii*/
+        if (flag_count == 0)
+        {
+            return 1;
+        }
     }
-
+    
     /* Rejection Policy Check */
     // If contains digit, 
     if ( ( digit_flag == 1 ) && (pw_buf[i]) >= '0' && (pw_buf[i]) <= '9')
@@ -168,7 +170,11 @@ int main(int argc, char **argv) {
       new_argc --;
       check_letter = 1;
     }
-
+    else if (prefix("--no_filter_input",argv[i]))
+    {
+      new_argc --;
+      filter_input = 0;
+    }
   }
 
     argc = new_argc;
