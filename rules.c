@@ -16,24 +16,10 @@ Important Test Case:
 #include "rules.h"
 
 // Increment rule position, return syntax error on premature end
-#define NEXT_RULEPOS(rule_pos)             \
-    do {                                   \
-        if ( ++(rule_pos) == rule_len ) {  \
-            errno = PREMATURE_END_OF_RULE; \
-            break;                         \
-        }                                  \
-    } while (0)
+#define NEXT_RULEPOS(rp)      if (++(rp) == rule_len) return (RULE_RC_SYNTAX_ERROR)
 
 // Read current rule position as positional value into out_var
-#define NEXT_RPTOI(rule, rule_pos, out_var)          \
-    do {                                             \
-        (out_var) = conv_ctoi( (rule)[(rule_pos)] ); \
-        if ( (out_var) == -1 ) {                     \
-            errno = INVALID_POSITIONAL;              \
-            break;                                   \
-        }                                            \
-    } while (0)
-
+#define NEXT_RPTOI(r,rp,up)   if (((up) = conv_pos ((r)[(rp)], pos_mem)) == -1) return (RULE_RC_SYNTAX_ERROR)
 
 static inline bool class_num(char c)   { return( (c >= '0') && (c <= '9') ); }
 static inline bool class_lower(char c) { return( (c >= 'a') && (c <= 'z') ); }
@@ -57,13 +43,24 @@ static inline int conv_ctoi(char c)
     }
 }
 
+// conv poisition to int
+static int conv_pos (char c, const int pos_mem)
+{
+  if (c == RULE_LAST_REJECTED_SAVED_POS)
+  {
+    return pos_mem;
+  }
+
+  return conv_ctoi (c);
+}
+
 // NOTE: toggle/lower/upper/switch functions used to be macros
 // To prevent breakage, the signatures haven't been changed
 // This also means that they have no return values and do no safety checks
 // The functions are only used internally, so it shouldn't be an issue
 
 // Toggle a character uppercase/lowercase at a given offset
-void MANGLE_TOGGLE_AT(char str[BLOCK_SIZE], int offset) {
+void MANGLE_TOGGLE_AT(char str[RP_PASSWORD_SIZE], int offset) {
     if ( class_alpha(str[offset]) ) {
         str[offset] ^= 0x20;
     }
@@ -71,7 +68,7 @@ void MANGLE_TOGGLE_AT(char str[BLOCK_SIZE], int offset) {
 
 
 // Convert a character at offset to lowercase
-void MANGLE_LOWER_AT(char str[BLOCK_SIZE], int offset) {
+void MANGLE_LOWER_AT(char str[RP_PASSWORD_SIZE], int offset) {
     if ( class_upper(str[offset]) ) {
         str[offset] ^= 0x20;
     }
@@ -79,7 +76,7 @@ void MANGLE_LOWER_AT(char str[BLOCK_SIZE], int offset) {
 
 
 // Convert a character at offset to uppercase
-void MANGLE_UPPER_AT(char str[BLOCK_SIZE], int offset) {
+void MANGLE_UPPER_AT(char str[RP_PASSWORD_SIZE], int offset) {
     if ( class_lower(str[offset]) ) {
         str[offset] ^= 0x20;
     }
@@ -87,14 +84,14 @@ void MANGLE_UPPER_AT(char str[BLOCK_SIZE], int offset) {
 
 
 // Swap the characters at offsets left and right
-void MANGLE_SWITCH(char str[BLOCK_SIZE], int left, int right) {
+void MANGLE_SWITCH(char str[RP_PASSWORD_SIZE], int left, int right) {
     char temp  = str[left];
     str[left]  = str[right];
     str[right] = temp;
 }
 
 
-int mangle_lrest (char arr[BLOCK_SIZE], int arr_len)
+int mangle_lrest (char arr[RP_PASSWORD_SIZE], int arr_len)
 {
   int pos;
 
@@ -103,7 +100,7 @@ int mangle_lrest (char arr[BLOCK_SIZE], int arr_len)
   return (arr_len);
 }
 
-int mangle_urest (char arr[BLOCK_SIZE], int arr_len)
+int mangle_urest (char arr[RP_PASSWORD_SIZE], int arr_len)
 {
   int pos;
 
@@ -112,7 +109,7 @@ int mangle_urest (char arr[BLOCK_SIZE], int arr_len)
   return (arr_len);
 }
 
-int mangle_trest (char arr[BLOCK_SIZE], int arr_len)
+int mangle_trest (char arr[RP_PASSWORD_SIZE], int arr_len)
 {
   int pos;
 
@@ -121,7 +118,7 @@ int mangle_trest (char arr[BLOCK_SIZE], int arr_len)
   return (arr_len);
 }
 
-int mangle_reverse (char arr[BLOCK_SIZE], int arr_len)
+int mangle_reverse (char arr[RP_PASSWORD_SIZE], int arr_len)
 {
   int l;
 
@@ -137,18 +134,18 @@ int mangle_reverse (char arr[BLOCK_SIZE], int arr_len)
   return (arr_len);
 }
 
-int mangle_double (char arr[BLOCK_SIZE], int arr_len)
+int mangle_double (char arr[RP_PASSWORD_SIZE], int arr_len)
 {
-  if ((arr_len * 2) >= BLOCK_SIZE) return (arr_len);
+  if ((arr_len * 2) >= RP_PASSWORD_SIZE) return (arr_len);
 
   memcpy (&arr[arr_len], arr, (size_t) arr_len);
 
   return (arr_len * 2);
 }
 
-int mangle_double_times (char arr[BLOCK_SIZE], int arr_len, int times)
+int mangle_double_times (char arr[RP_PASSWORD_SIZE], int arr_len, int times)
 {
-  if (((arr_len * times) + arr_len) >= BLOCK_SIZE) return (arr_len);
+  if (((arr_len * times) + arr_len) >= RP_PASSWORD_SIZE) return (arr_len);
 
   int orig_len = arr_len;
 
@@ -164,9 +161,9 @@ int mangle_double_times (char arr[BLOCK_SIZE], int arr_len, int times)
   return (arr_len);
 }
 
-int mangle_reflect (char arr[BLOCK_SIZE], int arr_len)
+int mangle_reflect (char arr[RP_PASSWORD_SIZE], int arr_len)
 {
-  if ((arr_len * 2) >= BLOCK_SIZE) return (arr_len);
+  if ((arr_len * 2) >= RP_PASSWORD_SIZE) return (arr_len);
 
   mangle_double (arr, arr_len);
 
@@ -175,7 +172,7 @@ int mangle_reflect (char arr[BLOCK_SIZE], int arr_len)
   return (arr_len * 2);
 }
 
-int mangle_rotate_left (char arr[BLOCK_SIZE], int arr_len)
+int mangle_rotate_left (char arr[RP_PASSWORD_SIZE], int arr_len)
 {
   int l;
   int r;
@@ -188,7 +185,7 @@ int mangle_rotate_left (char arr[BLOCK_SIZE], int arr_len)
   return (arr_len);
 }
 
-int mangle_rotate_right (char arr[BLOCK_SIZE], int arr_len)
+int mangle_rotate_right (char arr[RP_PASSWORD_SIZE], int arr_len)
 {
   int l;
   int r;
@@ -201,18 +198,18 @@ int mangle_rotate_right (char arr[BLOCK_SIZE], int arr_len)
   return (arr_len);
 }
 
-int mangle_append (char arr[BLOCK_SIZE], int arr_len, char c)
+int mangle_append (char arr[RP_PASSWORD_SIZE], int arr_len, char c)
 {
-  if ((arr_len + 1) >= BLOCK_SIZE) return (arr_len);
+  if ((arr_len + 1) >= RP_PASSWORD_SIZE) return (arr_len);
 
   arr[arr_len] = c;
 
   return (arr_len + 1);
 }
 
-int mangle_prepend (char arr[BLOCK_SIZE], int arr_len, char c)
+int mangle_prepend (char arr[RP_PASSWORD_SIZE], int arr_len, char c)
 {
-  if ((arr_len + 1) >= BLOCK_SIZE) return (arr_len);
+  if ((arr_len + 1) >= RP_PASSWORD_SIZE) return (arr_len);
 
   int arr_pos;
 
@@ -226,7 +223,7 @@ int mangle_prepend (char arr[BLOCK_SIZE], int arr_len, char c)
   return (arr_len + 1);
 }
 
-int mangle_delete_at (char arr[BLOCK_SIZE], int arr_len, int upos)
+int mangle_delete_at (char arr[RP_PASSWORD_SIZE], int arr_len, int upos)
 {
   if (upos >= arr_len) return (arr_len);
 
@@ -240,7 +237,7 @@ int mangle_delete_at (char arr[BLOCK_SIZE], int arr_len, int upos)
   return (arr_len - 1);
 }
 
-int mangle_extract (char arr[BLOCK_SIZE], int arr_len, int upos, int ulen)
+int mangle_extract (char arr[RP_PASSWORD_SIZE], int arr_len, int upos, int ulen)
 {
   if (upos >= arr_len) return (arr_len);
 
@@ -256,7 +253,7 @@ int mangle_extract (char arr[BLOCK_SIZE], int arr_len, int upos, int ulen)
   return (ulen);
 }
 
-int mangle_omit (char arr[BLOCK_SIZE], int arr_len, int upos, int ulen)
+int mangle_omit (char arr[RP_PASSWORD_SIZE], int arr_len, int upos, int ulen)
 {
   if (upos >= arr_len) return (arr_len);
 
@@ -272,11 +269,11 @@ int mangle_omit (char arr[BLOCK_SIZE], int arr_len, int upos, int ulen)
   return (arr_len - ulen);
 }
 
-int mangle_insert (char arr[BLOCK_SIZE], int arr_len, int upos, char c)
+int mangle_insert (char arr[RP_PASSWORD_SIZE], int arr_len, int upos, char c)
 {
   if (upos > arr_len) return (arr_len);
 
-  if ((arr_len + 1) >= BLOCK_SIZE) return (arr_len);
+  if ((arr_len + 1) >= RP_PASSWORD_SIZE) return (arr_len);
 
   int arr_pos;
 
@@ -290,8 +287,29 @@ int mangle_insert (char arr[BLOCK_SIZE], int arr_len, int upos, char c)
   return (arr_len + 1);
 }
 
+int mangle_insert_multi (char arr[RP_PASSWORD_SIZE], int arr_len, int arr_pos, char arr2[RP_PASSWORD_SIZE], int arr2_len, int arr2_pos, int arr2_cpy)
+{
+  if ((arr_len + arr2_cpy) > RP_PASSWORD_SIZE) return (RULE_RC_REJECT_ERROR);
 
-int mangle_overstrike (char arr[BLOCK_SIZE], int arr_len, int upos, char c)
+  if (arr_pos > arr_len) return (RULE_RC_REJECT_ERROR);
+
+  if (arr2_pos > arr2_len) return (RULE_RC_REJECT_ERROR);
+
+  if ((arr2_pos + arr2_cpy) > arr2_len) return (RULE_RC_REJECT_ERROR);
+
+  if (arr2_cpy < 1) return (RULE_RC_SYNTAX_ERROR);
+
+  memmove (arr2, arr2 + arr2_pos, arr2_len - arr2_pos);
+
+  memcpy  (arr2 + arr2_cpy, arr + arr_pos, arr_len - arr_pos);
+
+  memcpy  (arr + arr_pos, arr2, arr_len - arr_pos + arr2_cpy);
+
+  return (arr_len + arr2_cpy);
+}
+
+
+int mangle_overstrike (char arr[RP_PASSWORD_SIZE], int arr_len, int upos, char c)
 {
   if (upos >= arr_len) return (arr_len);
 
@@ -300,7 +318,7 @@ int mangle_overstrike (char arr[BLOCK_SIZE], int arr_len, int upos, char c)
   return (arr_len);
 }
 
-int mangle_truncate_at (char arr[BLOCK_SIZE], int arr_len, int upos)
+int mangle_truncate_at (char arr[RP_PASSWORD_SIZE], int arr_len, int upos)
 {
   if (upos >= arr_len) return (arr_len);
 
@@ -309,7 +327,7 @@ int mangle_truncate_at (char arr[BLOCK_SIZE], int arr_len, int upos)
   return (upos);
 }
 
-int mangle_replace (char arr[BLOCK_SIZE], int arr_len, char oldc, char newc)
+int mangle_replace (char arr[RP_PASSWORD_SIZE], int arr_len, char oldc, char newc)
 {
   int arr_pos;
 
@@ -323,7 +341,7 @@ int mangle_replace (char arr[BLOCK_SIZE], int arr_len, char oldc, char newc)
   return (arr_len);
 }
 
-int mangle_purgechar (char arr[BLOCK_SIZE], int arr_len, char c)
+int mangle_purgechar (char arr[RP_PASSWORD_SIZE], int arr_len, char c)
 {
   int arr_pos;
 
@@ -341,11 +359,11 @@ int mangle_purgechar (char arr[BLOCK_SIZE], int arr_len, char c)
   return (ret_len);
 }
 
-int mangle_dupeblock_prepend (char arr[BLOCK_SIZE], int arr_len, int ulen)
+int mangle_dupeblock_prepend (char arr[RP_PASSWORD_SIZE], int arr_len, int ulen)
 {
   if (ulen > arr_len) return (arr_len);
 
-  if ((arr_len + ulen) >= BLOCK_SIZE) return (arr_len);
+  if ((arr_len + ulen) >= RP_PASSWORD_SIZE) return (arr_len);
 
   char cs[100] = { 0 };
 
@@ -363,11 +381,11 @@ int mangle_dupeblock_prepend (char arr[BLOCK_SIZE], int arr_len, int ulen)
   return (arr_len);
 }
 
-int mangle_dupeblock_append (char arr[BLOCK_SIZE], int arr_len, int ulen)
+int mangle_dupeblock_append (char arr[RP_PASSWORD_SIZE], int arr_len, int ulen)
 {
   if (ulen > arr_len) return (arr_len);
 
-  if ((arr_len + ulen) >= BLOCK_SIZE) return (arr_len);
+  if ((arr_len + ulen) >= RP_PASSWORD_SIZE) return (arr_len);
 
   int upos = arr_len - ulen;
 
@@ -383,10 +401,10 @@ int mangle_dupeblock_append (char arr[BLOCK_SIZE], int arr_len, int ulen)
   return (arr_len);
 }
 
-int mangle_dupechar_at (char arr[BLOCK_SIZE], int arr_len, int upos, int ulen)
+int mangle_dupechar_at (char arr[RP_PASSWORD_SIZE], int arr_len, int upos, int ulen)
 {
   if ( arr_len         ==  0) return (arr_len);
-  if ((arr_len + ulen) >= BLOCK_SIZE) return (arr_len);
+  if ((arr_len + ulen) >= RP_PASSWORD_SIZE) return (arr_len);
 
   char c = arr[upos];
 
@@ -400,10 +418,10 @@ int mangle_dupechar_at (char arr[BLOCK_SIZE], int arr_len, int upos, int ulen)
   return (arr_len);
 }
 
-int mangle_dupechar (char arr[BLOCK_SIZE], int arr_len)
+int mangle_dupechar (char arr[RP_PASSWORD_SIZE], int arr_len)
 {
   if ( arr_len            ==  0) return (arr_len);
-  if ((arr_len + arr_len) >= BLOCK_SIZE) return (arr_len);
+  if ((arr_len + arr_len) >= RP_PASSWORD_SIZE) return (arr_len);
 
   int arr_pos;
 
@@ -419,7 +437,7 @@ int mangle_dupechar (char arr[BLOCK_SIZE], int arr_len)
   return (arr_len * 2);
 }
 
-int mangle_switch_at_check (char arr[BLOCK_SIZE], int arr_len, int upos, int upos2)
+int mangle_switch_at_check (char arr[RP_PASSWORD_SIZE], int arr_len, int upos, int upos2)
 {
   if (upos  >= arr_len) return (arr_len);
   if (upos2 >= arr_len) return (arr_len);
@@ -429,14 +447,14 @@ int mangle_switch_at_check (char arr[BLOCK_SIZE], int arr_len, int upos, int upo
   return (arr_len);
 }
 
-int mangle_switch_at (char arr[BLOCK_SIZE], int arr_len, int upos, int upos2)
+int mangle_switch_at (char arr[RP_PASSWORD_SIZE], int arr_len, int upos, int upos2)
 {
   MANGLE_SWITCH (arr, upos, upos2);
 
   return (arr_len);
 }
 
-int mangle_chr_shiftl (char arr[BLOCK_SIZE], int arr_len, int upos)
+int mangle_chr_shiftl (char arr[RP_PASSWORD_SIZE], int arr_len, int upos)
 {
   if (upos >= arr_len) return (arr_len);
 
@@ -445,7 +463,7 @@ int mangle_chr_shiftl (char arr[BLOCK_SIZE], int arr_len, int upos)
   return (arr_len);
 }
 
-int mangle_chr_shiftr (char arr[BLOCK_SIZE], int arr_len, int upos)
+int mangle_chr_shiftr (char arr[RP_PASSWORD_SIZE], int arr_len, int upos)
 {
   if (upos >= arr_len) return (arr_len);
 
@@ -454,7 +472,7 @@ int mangle_chr_shiftr (char arr[BLOCK_SIZE], int arr_len, int upos)
   return (arr_len);
 }
 
-int mangle_chr_incr (char arr[BLOCK_SIZE], int arr_len, int upos)
+int mangle_chr_incr (char arr[RP_PASSWORD_SIZE], int arr_len, int upos)
 {
   if (upos >= arr_len) return (arr_len);
 
@@ -463,7 +481,7 @@ int mangle_chr_incr (char arr[BLOCK_SIZE], int arr_len, int upos)
   return (arr_len);
 }
 
-int mangle_chr_decr (char arr[BLOCK_SIZE], int arr_len, int upos)
+int mangle_chr_decr (char arr[RP_PASSWORD_SIZE], int arr_len, int upos)
 {
   if (upos >= arr_len) return (arr_len);
 
@@ -472,7 +490,7 @@ int mangle_chr_decr (char arr[BLOCK_SIZE], int arr_len, int upos)
   return (arr_len);
 }
 
-int mangle_title_sep (char arr[BLOCK_SIZE], int arr_len, char c)
+int mangle_title_sep (char arr[RP_PASSWORD_SIZE], int arr_len, char c)
 {
   int upper_next = 1;
 
@@ -504,18 +522,23 @@ int mangle_title_sep (char arr[BLOCK_SIZE], int arr_len, char c)
 
 
 
-int apply_rule(char *rule, int rule_len, char in[BLOCK_SIZE], int in_len, char out[BLOCK_SIZE])
+int apply_rule(char *rule, int rule_len, char in[RP_PASSWORD_SIZE], int in_len, char out[RP_PASSWORD_SIZE])
 {
-    if (rule       == NULL) { return(INVALID_INPUT); }
-    if (rule_len == 0)      { return(INVALID_INPUT); }
+    char mem[RP_PASSWORD_SIZE] = { 0 };
 
-    if (in == NULL)         { return(INVALID_INPUT); }
-    if (out == NULL)        { return(INVALID_INPUT); }
+    int pos_mem = -1;
 
-    if (in_len  <     0 ||   in_len >= BLOCK_SIZE) { return(INVALID_INPUT); }
+    if (rule       == NULL) { return(RULE_RC_REJECT_ERROR); }
+    if (rule_len < 1)       { return(RULE_RC_REJECT_ERROR); }
 
-    //int out_len = (input_len < BLOCK_SIZE ? input_len : BLOCK_SIZE - 1);
+    if (in == NULL)         { return(RULE_RC_REJECT_ERROR); }
+    if (out == NULL)        { return(RULE_RC_REJECT_ERROR); }
+
+    if (in_len  <     0 ||   in_len >= RP_PASSWORD_SIZE) { return(RULE_RC_REJECT_ERROR); }
+
+    //int out_len = (input_len < RP_PASSWORD_SIZE ? input_len : RP_PASSWORD_SIZE - 1);
     int out_len = in_len;
+    int mem_len = in_len;
     memcpy (out, in, out_len);
 
     // Operation parameters
@@ -523,7 +546,6 @@ int apply_rule(char *rule, int rule_len, char in[BLOCK_SIZE], int in_len, char o
     for (rule_pos = 0, errno = 0; rule_pos < rule_len && !errno; rule_pos++) {
         int upos, upos2;
         int ulen;
-
         switch (rule[rule_pos]) {
             case ' ':
             case '\t':
@@ -748,8 +770,114 @@ int apply_rule(char *rule, int rule_len, char in[BLOCK_SIZE], int in_len, char o
               out_len = mangle_title_sep (out, out_len, ' ');
               break;
 
+            case RULE_OP_MANGLE_EXTRACT_MEMORY:
+              if (mem_len < 1) return (RULE_RC_REJECT_ERROR);
+              NEXT_RULEPOS (rule_pos);
+              NEXT_RPTOI (rule, rule_pos, upos);
+              NEXT_RULEPOS (rule_pos);
+              NEXT_RPTOI (rule, rule_pos, ulen);
+              NEXT_RULEPOS (rule_pos);
+              NEXT_RPTOI (rule, rule_pos, upos2);
+              if ((out_len = mangle_insert_multi (out, out_len, upos2, mem, mem_len, upos, ulen)) < 1) return (out_len);
+              break;
+
+            case RULE_OP_MANGLE_APPEND_MEMORY:
+              if (mem_len < 1) return (RULE_RC_REJECT_ERROR);
+              if ((out_len + mem_len) >= RP_PASSWORD_SIZE) return (RULE_RC_REJECT_ERROR);
+              memcpy (out + out_len, mem, mem_len);
+              out_len += mem_len;
+              break;
+
+            case RULE_OP_MANGLE_PREPEND_MEMORY:
+              if (mem_len < 1) return (RULE_RC_REJECT_ERROR);
+              if ((mem_len + out_len) >= RP_PASSWORD_SIZE) return (RULE_RC_REJECT_ERROR);
+              memcpy (mem + mem_len, out, out_len);
+              out_len += mem_len;
+              memcpy (out, mem, out_len);
+              break;
+
+            case RULE_OP_MEMORIZE_WORD:
+              memcpy (mem, out, out_len);
+              mem_len = out_len;
+              break;
+
+            case RULE_OP_REJECT_LESS:
+              NEXT_RULEPOS (rule_pos);
+              NEXT_RPTOI (rule, rule_pos, upos);
+              if (out_len > upos) return (RULE_RC_REJECT_ERROR);
+              break;
+
+            case RULE_OP_REJECT_GREATER:
+              NEXT_RULEPOS (rule_pos);
+              NEXT_RPTOI (rule, rule_pos, upos);
+              if (out_len < upos) return (RULE_RC_REJECT_ERROR);
+              break;
+
+            case RULE_OP_REJECT_EQUAL:
+              NEXT_RULEPOS (rule_pos);
+              NEXT_RPTOI (rule, rule_pos, upos);
+              if (out_len != upos) return (RULE_RC_REJECT_ERROR);
+              break;
+
+            case RULE_OP_REJECT_CONTAIN:
+              NEXT_RULEPOS (rule_pos);
+              if (strchr (out, rule[rule_pos]) != NULL) return (RULE_RC_REJECT_ERROR);
+              break;
+
+            case RULE_OP_REJECT_NOT_CONTAIN:
+              NEXT_RULEPOS (rule_pos);
+              char *match = strchr (out, rule[rule_pos]);
+              if (match != NULL)
+              {
+                pos_mem = (int)(match - out);
+              }
+              else
+              {
+                return (RULE_RC_REJECT_ERROR);
+              }
+              break;
+
+            case RULE_OP_REJECT_EQUAL_FIRST:
+              NEXT_RULEPOS (rule_pos);
+              if (out[0] != rule[rule_pos]) return (RULE_RC_REJECT_ERROR);
+              break;
+
+            case RULE_OP_REJECT_EQUAL_LAST:
+              NEXT_RULEPOS (rule_pos);
+              if (out[out_len - 1] != rule[rule_pos]) return (RULE_RC_REJECT_ERROR);
+              break;
+
+            case RULE_OP_REJECT_EQUAL_AT:
+              NEXT_RULEPOS (rule_pos);
+              NEXT_RPTOI (rule, rule_pos, upos);
+              if ((upos + 1) > out_len) return (RULE_RC_REJECT_ERROR);
+              NEXT_RULEPOS (rule_pos);
+              if (out[upos] != rule[rule_pos]) return (RULE_RC_REJECT_ERROR);
+              break;
+
+            case RULE_OP_REJECT_CONTAINS:
+              NEXT_RULEPOS (rule_pos);
+              NEXT_RPTOI (rule, rule_pos, upos);
+              if ((upos + 1) > out_len) return (RULE_RC_REJECT_ERROR);
+              NEXT_RULEPOS (rule_pos);
+              int c; int cnt;
+              for (c = 0, cnt = 0; c < out_len && cnt < upos; c++)
+              {
+                if (out[c] == rule[rule_pos])
+                {
+                  cnt++;
+                  pos_mem = c;
+                }
+              }
+              if (cnt < upos) return (RULE_RC_REJECT_ERROR);
+              break;
+
+            case RULE_OP_REJECT_MEMORY:
+              if ((out_len == mem_len) && (memcmp (out, mem, out_len) == 0)) return (RULE_RC_REJECT_ERROR);
+              break;
+
             default:
-              errno = UNKNOWN_RULE_OP;
+              errno = RULE_RC_SYNTAX_ERROR;
               break;
               }
     }
@@ -757,6 +885,6 @@ int apply_rule(char *rule, int rule_len, char in[BLOCK_SIZE], int in_len, char o
     if (errno != 0) { return(errno); }
 
     // Add the null terminator and null extra bytes (just in case)
-    memset(out + out_len, 0, BLOCK_SIZE - out_len);
+    memset(out + out_len, 0, RP_PASSWORD_SIZE - out_len);
     return(out_len);
 }

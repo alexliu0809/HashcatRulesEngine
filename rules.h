@@ -17,29 +17,22 @@
 #include <stdbool.h>
 #include <limits.h>
 
-// Input over BLOCK_SIZE - 1 bytes are skipped
-// Rules which push the output over BLOCK_SIZE - 1 are skipped
-#ifndef BLOCK_SIZE
-    #define BLOCK_SIZE 32
+// Input over RP_PASSWORD_SIZE - 1 bytes are skipped
+// Rules which push the output over RP_PASSWORD_SIZE - 1 are skipped
+#ifndef RULE_OP_REJECT_MEMORY
+    #define RP_PASSWORD_SIZE 256 // old version only supports 32
 #endif
 
 
 // Applies a rule to an input word and saves the output to output_word
-// If a rule operation would cause the length to extend beyond BLOCK_SIZE, the operation is skipped
+// If a rule operation would cause the length to extend beyond RP_PASSWORD_SIZE, the operation is skipped
 // Do not pass a hand-crafted rule struct into this function, run it through parse_rule() first
-int apply_rule(char *rule, int rule_len, char in[BLOCK_SIZE], int in_len, char out[BLOCK_SIZE]);
+int apply_rule(char *rule, int rule_len, char in[RP_PASSWORD_SIZE], int in_len, char out[RP_PASSWORD_SIZE]);
 
 
 
-enum RULE_RC {
-    INVALID_INPUT = -99,
-    PREMATURE_END_OF_RULE,
-    UNKNOWN_RULE_OP,
-    INVALID_POSITIONAL,
-    MEMORY_ERROR,
-    REJECTED,
-    UNKNOWN_ERROR
-};
+#define RULE_RC_SYNTAX_ERROR -1
+#define RULE_RC_REJECT_ERROR -2
 
 
 #define RULE_OP_MANGLE_NOOP             ':'
@@ -70,6 +63,24 @@ enum RULE_RC {
 #define RULE_OP_MANGLE_DUPECHAR_FIRST   'z'
 #define RULE_OP_MANGLE_DUPECHAR_LAST    'Z'
 #define RULE_OP_MANGLE_DUPECHAR_ALL     'q'
+#define RULE_OP_MANGLE_EXTRACT_MEMORY   'X'
+#define RULE_OP_MANGLE_APPEND_MEMORY    '4'
+#define RULE_OP_MANGLE_PREPEND_MEMORY   '6'
+#define RULE_OP_MANGLE_TITLE_SEP        'e'
+
+#define RULE_OP_MEMORIZE_WORD           'M'
+
+#define RULE_OP_REJECT_LESS             '<'
+#define RULE_OP_REJECT_GREATER          '>'
+#define RULE_OP_REJECT_EQUAL            '_'
+#define RULE_OP_REJECT_CONTAIN          '!'
+#define RULE_OP_REJECT_NOT_CONTAIN      '/'
+#define RULE_OP_REJECT_EQUAL_FIRST      '('
+#define RULE_OP_REJECT_EQUAL_LAST       ')'
+#define RULE_OP_REJECT_EQUAL_AT         '='
+#define RULE_OP_REJECT_CONTAINS         '%'
+#define RULE_OP_REJECT_MEMORY           'Q'
+#define RULE_LAST_REJECTED_SAVED_POS    'p'
 
 #define RULE_OP_MANGLE_SWITCH_FIRST     'k'
 #define RULE_OP_MANGLE_SWITCH_LAST      'K'
@@ -83,6 +94,5 @@ enum RULE_RC {
 #define RULE_OP_MANGLE_DUPEBLOCK_FIRST  'y'
 #define RULE_OP_MANGLE_DUPEBLOCK_LAST   'Y'
 #define RULE_OP_MANGLE_TITLE            'E'
-#define RULE_OP_MANGLE_TITLE_SEP        'e'
 
 #endif /* RULES_H */

@@ -25,14 +25,14 @@ void free_hash(RuleHash *hash) {
 
 void usage(char *hcre) {
     printf("\n");
-    printf("USAGE:  %s  wordlist -r rulelist --stdout [--password policies]\n", hcre);
+    printf("USAGE:  %s  wordlist -r rulelist --stdout [--no_filter_input] [--count_only] [--password policies]\n", hcre);
     printf("\n");
     printf("Input words are read from wordlist\n");
     printf("Input rules are read from rulelist\n");
     printf("\n");
     printf("\n");
     printf("EXAMPLE:\n");
-    printf("    %s  words.txt -r best64.rule --stdout --length=6\n", hcre);
+    printf("    %s  words.txt -r best64.rule --stdout --no_filter_input --count_only --length=6\n", hcre);
     printf("\n");
 }
 
@@ -41,7 +41,10 @@ int check_digit = 0;
 int check_letter = 0;
 int check_lower = 0;
 int check_upper = 0;
-int filter_input = 1;
+
+// flags
+int filter_input = 1; // filter input_stream, onlt return ASCII printables
+int count_only = 0; // only return a number, count guesses made by this specific configuration.
 
 static int check_password_policy(char *pw_buf, const int pw_len)
 {
@@ -175,6 +178,11 @@ int main(int argc, char **argv) {
       new_argc --;
       filter_input = 0;
     }
+    else if (prefix("--count_only",argv[i]))
+    {
+      new_argc --;
+      count_only = 1;
+    }
   }
 
     argc = new_argc;
@@ -300,7 +308,7 @@ int main(int argc, char **argv) {
 
 
     // Our mangled text ends up here
-    char rule_output[BLOCK_SIZE];
+    char rule_output[RP_PASSWORD_SIZE];
 
 
     // Increase the output buffering
@@ -322,6 +330,7 @@ int main(int argc, char **argv) {
     #endif
 
     // Main processing loop, runs for each line of input
+    int guess_count = 0; //count guesses made by this configuration
     while ( !feof(word_file) ) {
         line_len = getline(&line, &line_malloc_size, word_file);
         
@@ -339,7 +348,7 @@ int main(int argc, char **argv) {
         }
 
         /** Filter Input Word, If too long, skip**/
-        if (line_len >= BLOCK_SIZE){
+        if (line_len >= RP_PASSWORD_SIZE){
             continue;
         } 
 
@@ -361,24 +370,29 @@ int main(int argc, char **argv) {
 
             // Something broke?
             if (rule_rtn < 0) {
-                if (rule_rtn == REJECTED) {
+                if (rule_rtn == RULE_RC_REJECT_ERROR) {
                     // Rejections are expected, they're okay
+                    /*
                     fprintf(stderr,
                         "Input word <%s> Rejected <%s> Wrong!\n",
                         line,cur_hash->rule);
+                        */
+                    break;
                 } 
                 else {
+                    //printf("error: %d\n", rule_rtn);
                     // We missed something in parsing and now our rule broke
                     // We can't "fix" the rule, so our only option is to remove it
                     // If you ever see this message, please contact the developer
                     fprintf(stderr,
                         "Input word <%s> Broke Rule <%s>\n",
                         line,cur_hash->rule);
-                    free_hash(cur_hash);
+                    
+                    //free_hash(cur_hash);
                 }
 
                 // Regardless if this was a rejection or error, we're not printing this word
-                continue;
+                break;
 
             }
             else{
@@ -390,13 +404,21 @@ int main(int argc, char **argv) {
 
                 if (check_password_policy(rule_output, rule_rtn) == 1)
                 {
-                    //resultant word
-                    rule_output[rule_rtn++] = '\t';
-                    fwrite(rule_output, rule_rtn, 1, stdout);
+                    if (count_only == 0) // output actual pwd
+                    {
+                        //resultant word
+                        rule_output[rule_rtn++] = '\t';
+                        fwrite(rule_output, rule_rtn, 1, stdout);
 
-                    //original word
-                    fwrite(line, line_len, 1, stdout);
-                    fputc('\n', stdout);
+                        //original word
+                        fwrite(line, line_len, 1, stdout);
+                        fputc('\n', stdout);
+                    }
+                    else //output a number only
+                    {
+                        guess_count += 1;
+                    }
+                    
                 }
 
             }
@@ -406,7 +428,10 @@ int main(int argc, char **argv) {
 
         }
 
-        
+    }
+    // at the end of program, if requires only a number, output this number.
+    if (count_only == 1){
+            fprintf(stdout, "%d\n", guess_count);
     }
 
     return 0;
