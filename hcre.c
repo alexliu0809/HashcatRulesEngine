@@ -215,6 +215,7 @@ int main(int argc, char **argv) {
 
     // fgets() will read into this
     char    line[RP_PASSWORD_SIZE] = { 0 };
+    char    *f_res;
 
     #ifdef DEBUG
     printf("initialize\n");
