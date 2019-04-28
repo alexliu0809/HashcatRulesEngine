@@ -213,10 +213,8 @@ int main(int argc, char **argv) {
     // Reading/writing to rules hash
     RuleHash *cur_hash = NULL;
 
-    // getline() will read into this
-    char   *line     = NULL;
-    ssize_t line_len = 0;
-    size_t  line_malloc_size = 0;
+    // fgets() will read into this
+    char    line[RP_PASSWORD_SIZE] = { 0 };
 
     #ifdef DEBUG
     printf("initialize\n");
@@ -234,7 +232,8 @@ int main(int argc, char **argv) {
     // Read each rule from the input file
 
     while ( !feof(rule_file) ) {
-        line_len = getline(&line, &line_malloc_size, rule_file);
+        f_res = fgets(line, RP_PASSWORD_SIZE, rule_file);
+        int line_len = strlen(line);
         
         #ifdef DEBUG
         printf("%s\n", line);
@@ -242,7 +241,7 @@ int main(int argc, char **argv) {
         #endif
         
         // Stop processing file on error or end of input (we don't care which)
-        if (line_len <= 0) { break; }
+        if (f_res == NULL) { break; }
 
         // Trim trailing newline by overwriting it will a NULL terminator
         while (line[line_len - 1] == '\n' || line[line_len - 1] == '\r') {
@@ -332,7 +331,8 @@ int main(int argc, char **argv) {
     // Main processing loop, runs for each line of input
     int guess_count = 0; //count guesses made by this configuration
     while ( !feof(word_file) ) {
-        line_len = getline(&line, &line_malloc_size, word_file);
+        f_res = fgets(line, RP_PASSWORD_SIZE, word_file);
+        int line_len = strlen(line);
         
         #ifdef DEBUG
         printf("%s", line);
@@ -340,7 +340,7 @@ int main(int argc, char **argv) {
         #endif
 
         // Error or end of input
-        if (line_len <= 0) { break; }
+        if (f_res == NULL) { break; }
 
         // Trim trailing newline
         while (line[line_len - 1] == '\n' || line[line_len - 1] == '\r') {
