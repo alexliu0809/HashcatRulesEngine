@@ -859,7 +859,7 @@ int apply_rule(char *rule, int rule_len, char in[RP_PASSWORD_SIZE], int in_len, 
             case RULE_OP_REJECT_CONTAINS:
               NEXT_RULEPOS (rule_pos);
               NEXT_RPTOI (rule, rule_pos, upos);
-              if ((upos + 1) > out_len) return (RULE_RC_REJECT_ERROR);
+              if (upos > out_len) return (RULE_RC_REJECT_ERROR); // should be this, buggy hc
               NEXT_RULEPOS (rule_pos);
               int c; int cnt;
               for (c = 0, cnt = 0; c < out_len && cnt < upos; c++)
