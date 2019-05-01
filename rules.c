@@ -520,6 +520,19 @@ int mangle_title_sep (char arr[RP_PASSWORD_SIZE], int arr_len, char c)
   return (arr_len);
 }
 
+char *str_contains_chr(char arr[RP_PASSWORD_SIZE], int arr_len, char c){
+  int pos;
+  for (pos = 0; pos < arr_len; pos++)
+  {
+    
+    if (arr[pos] == c)
+    {
+      return &arr[pos];
+    }
+  }
+  return NULL;
+}
+
 
 
 int apply_rule(char *rule, int rule_len, char in[RP_PASSWORD_SIZE], int in_len, char out[RP_PASSWORD_SIZE])
@@ -822,12 +835,13 @@ int apply_rule(char *rule, int rule_len, char in[RP_PASSWORD_SIZE], int in_len, 
 
             case RULE_OP_REJECT_CONTAIN:
               NEXT_RULEPOS (rule_pos);
-              if (strchr (out, rule[rule_pos]) != NULL) return (RULE_RC_REJECT_ERROR);
+              if (str_contains_chr (out, out_len, rule[rule_pos]) != NULL) return (RULE_RC_REJECT_ERROR);
               break;
 
             case RULE_OP_REJECT_NOT_CONTAIN:
               NEXT_RULEPOS (rule_pos);
-              char *match = strchr (out, rule[rule_pos]);
+              char *match = str_contains_chr (out, out_len, rule[rule_pos]);
+              //char *match = strchr (out, rule[rule_pos]); // another buggy hc
               if (match != NULL)
               {
                 pos_mem = (int)(match - out);
