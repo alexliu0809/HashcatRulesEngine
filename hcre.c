@@ -363,7 +363,7 @@ int main(int argc, char **argv) {
 
         while (cur_hash != NULL)
         {
-            // Apply the rule operations
+            // Apply one line of rule
             int rule_rtn = apply_rule(cur_hash->rule, cur_hash->rule_len, line, line_len, rule_output);
             #ifdef DEBUG
             printf("%s\n", "Apply Rules");
@@ -378,7 +378,7 @@ int main(int argc, char **argv) {
                         "Input word <%s> Rejected <%s> Wrong!\n",
                         line,cur_hash->rule);
                         */
-                    break;
+                    //break;
                 } 
                 else {
                     //printf("error: %d\n", rule_rtn);
@@ -393,7 +393,7 @@ int main(int argc, char **argv) {
                 }
 
                 // Regardless if this was a rejection or error, we're not printing this word
-                break;
+                
 
             }
             else{
@@ -424,7 +424,7 @@ int main(int argc, char **argv) {
 
             }
 
-            //Next hash
+            //Next line of rule
             cur_hash = cur_hash -> next;
 
         }
