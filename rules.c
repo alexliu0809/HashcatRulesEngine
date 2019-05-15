@@ -551,9 +551,11 @@ int apply_rule(char *rule, int rule_len, char in[RP_PASSWORD_SIZE], int in_len, 
 
     //int out_len = (input_len < RP_PASSWORD_SIZE ? input_len : RP_PASSWORD_SIZE - 1);
     int out_len = in_len;
-    int mem_len = in_len;
     memset (out, 0, RP_PASSWORD_SIZE);
     memcpy (out, in, out_len);
+
+    memcpy (mem, out, out_len);
+    int mem_len = out_len;
 
     // Operation parameters
     int errno, rule_pos;
